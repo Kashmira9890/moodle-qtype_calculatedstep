@@ -245,6 +245,13 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
                     $datasetitem->id = 0;
                     $datasetitem->value = $this->qtypeobj->generate_dataset_item(
                             $datasetdef->options);
+
+                    // call to our function ..
+                    if($defid == "1-0-scadans1") {
+                        $scadansvalue = $this->generate_scadans1_value();
+                        $datasetitem->value = $scadansvalue;
+                    }
+
                     $this->datasetdefs[$defid]->items[$numberadded] = $datasetitem;
                 }
             }
@@ -268,6 +275,16 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
                     $this->datasetdefs[$defid]->itemcount = $i;
                     $i++;
                 }
+                // Override form value of scadans ..
+                // Requires $this->datasetdefs[$defid]->items to be populated
+                // with the values of used variables in Ans Formula 1
+                foreach ($fromformdefinition as $key => $defid) {
+                    // call to our function ..
+                    if($defid == "1-0-scadans1") {
+                        $scadansvalue = $this->generate_scadans1_value();
+                        $this->datasetdefs[$defid]->items[$addeditem->itemnumber]->value = $scadansvalue;
+                    }
+                }
             }
             if (isset($addeditem->itemnumber) && $this->maxnumber < $addeditem->itemnumber) {
                 $this->maxnumber = $addeditem->itemnumber;
@@ -280,6 +297,75 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
         }
 
         parent::__construct($submiturl, $question, $category, $contexts, $formeditable);
+    }
+
+    protected function generate_scadans1_value() {
+        // see for $data value for eveluation of below functn
+
+//         if($defid == "1-0-scadans1") {
+
+        // Either this .. if possible checkout
+//         $comment = $this->qtypeobj->comment_on_datasetitems(
+//                 $this->qtypeobj, $this->question->id,
+//                 $this->question->questiontext, $this->nonemptyanswer,
+//                 $data, $itemnumber);
+
+        // OR this .. code from comment_on_dsitems(..) ..
+        $kanswers = fullclone($this->answer);   // OR
+        $kanswers1 = fullclone($this->answer[0]);
+
+//         echo '<br> kanswers ';
+//         print_object($kanswers);
+
+//         $delimiter = ': ';
+//         $virtualqtype =  $this->qtypeobj->get_virtual_qtype();
+        foreach ($kanswers as $kkey => $kanswer) {
+            $kdata = array();
+
+//             if ($kkey == 0) {
+            $error = qtype_calculated_find_formula_errors($kanswer->answer);
+//             if ($error) {
+//                 $comment->stranswers[$key] = $error;
+//                 continue;
+//             }
+
+            // Calc $data
+            if (!empty($this->datasetdefs)) {
+//                 $j = $this->noofitems * count($this->datasetdefs);
+//                 for ($itemnumber = $this->noofitems; $itemnumber >= 1; $itemnumber--) {
+                for ($itemnumber = 1; $itemnumber >= 0; $itemnumber--) {
+                    foreach ($this->datasetdefs as $kdefid => $kdatasetdef) {
+//                         echo '<br> datasetdef ';
+//                         print_object($kdatasetdef);
+                        if (isset($kdatasetdef->items[$itemnumber])) {
+                            $kdata[$kdatasetdef->name] = $kdatasetdef->items[$itemnumber]->value;
+                        }
+                    }
+                }
+//                 }
+
+                // Requires data ..
+//                 $kformula = $this->substitute_variables($kanswer->answer, $kdata);   // subs_var is a func of qtype_calc and not this class
+//                 $this->qtypeobj->
+
+//                 echo '<br> kanswer ';
+//                 print_object($kanswer);
+                $kformattedanswer = qtype_calculated_calculate_answer(
+                        $kanswer->answer, $kdata, $kanswer->tolerance,
+                        $kanswer->tolerancetype, $kanswer->correctanswerlength,
+                        $kanswer->correctanswerformat);
+                break;
+                }
+            }
+
+//             $scad_ansvalue = qtype_calculated_calculate_answer(  // covered above in code from comment..()
+//                     $answer, $data, $tolerance,
+//                     $tolerancetype, $correctanswerlength,
+//                     $correctanswerformat);
+
+//             $datasetitem->value = $kformattedanswer->answer;
+            return $kformattedanswer->answer;
+//         }
     }
 
     /**
