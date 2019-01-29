@@ -248,14 +248,16 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
 
                     // call to our function ..
                     if($defid == "1-0-scadans1") {
-                        $scadansvalue = $this->generate_scadans1_value();
+                        $scadansvalue = $this->generate_scadans1_value($numberadded);
                         $datasetitem->value = $scadansvalue;
                     }
 
                     $this->datasetdefs[$defid]->items[$numberadded] = $datasetitem;
                 }
             }
+
             $this->maxnumber = $maxnumber;
+            //$this-regenerate_scadans_items()
         } else {
             // Handle reload dataset items.
             if (optional_param_array('definition', '', PARAM_NOTAGS) &&
@@ -278,11 +280,16 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
                 // Override form value of scadans ..
                 // Requires $this->datasetdefs[$defid]->items to be populated
                 // with the values of used variables in Ans Formula 1
-                foreach ($fromformdefinition as $key => $defid) {
-                    // call to our function ..
-                    if($defid == "1-0-scadans1") {
-                        $scadansvalue = $this->generate_scadans1_value();
-                        $this->datasetdefs[$defid]->items[$addeditem->itemnumber]->value = $scadansvalue;
+                $k = 1;
+                if (optional_param('updatedatasets', false, PARAM_BOOL)) {
+                    foreach ($fromformdefinition as $key => $defid) {
+                        // call to our function ..
+                        if($defid == "1-0-scadans1") {
+                            $itemnumber = ceil($k / count($this->datasetdefs));
+                            $scadansvalue = $this->generate_scadans1_value($itemnumber);
+                            $this->datasetdefs[$defid]->items[$itemnumber]->value = $scadansvalue;
+                        }
+                        $k++;
                     }
                 }
             }
@@ -299,7 +306,7 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
         parent::__construct($submiturl, $question, $category, $contexts, $formeditable);
     }
 
-    protected function generate_scadans1_value() {
+    protected function generate_scadans1_value($itemnumber) {
         // see for $data value for eveluation of below functn
 
 //         if($defid == "1-0-scadans1") {
@@ -333,7 +340,7 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
             if (!empty($this->datasetdefs)) {
 //                 $j = $this->noofitems * count($this->datasetdefs);
 //                 for ($itemnumber = $this->noofitems; $itemnumber >= 1; $itemnumber--) {
-                for ($itemnumber = 1; $itemnumber >= 0; $itemnumber--) {
+//                 for ($itemnumber = 1; $itemnumber >= 0; $itemnumber--) {
                     foreach ($this->datasetdefs as $kdefid => $kdatasetdef) {
 //                         echo '<br> datasetdef ';
 //                         print_object($kdatasetdef);
@@ -341,7 +348,7 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
                             $kdata[$kdatasetdef->name] = $kdatasetdef->items[$itemnumber]->value;
                         }
                     }
-                }
+//                 }
 //                 }
 
                 // Requires data ..
