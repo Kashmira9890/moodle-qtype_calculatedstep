@@ -227,6 +227,198 @@ class qtype_calculatedstep extends qtype_calculated {
         return true;
     }
 
+    public function save_question($question, $fromform) {
+        global $CFG, $DB;
+        echo '<br><br><br> in step save dsi';
+        echo '<br>==================this=================';
+        print_object($this);
+        echo '<br>==================fromform=================';
+        print_object($fromform);
+
+        // Get the old datasets for this question.
+        $datasetdefs = $this->get_dataset_definitions($question->id, array());
+        echo '<br>==================datasetdefs=================';
+        print_object($datasetdefs);
+
+        $i = 1;
+        $fromformdefinition = $fromform->definition;
+        $fromformnumber = $fromform->number;// This parameter will be validated in the form.
+        $fromformitemid = $fromform->itemid;
+        ksort($fromformdefinition);
+
+//         $addeditem = new stdClass();
+        foreach ($fromformdefinition as $key => $defid) {
+            $addeditem = new stdClass();
+            $addeditem->id = $fromformitemid[$i];
+            $addeditem->value = $fromformnumber[$i];
+            $addeditem->itemnumber = ceil($i / count($datasetdefs));
+            $datasetdefs[$defid]->items[$addeditem->itemnumber] = $addeditem;
+            $datasetdefs[$defid]->itemcount = $i;
+            $i++;
+        }
+
+        // Handle generator options...
+//         $olddatasetdefs = fullclone($datasetdefs);
+//         $datasetdefs = $this->update_dataset_options($datasetdefs, $fromform);
+        $maxnumber = -1;
+        foreach ($datasetdefs as $defid => $datasetdef) {
+//             if (isset($datasetdef->id)
+//                     && $datasetdef->options != $olddatasetdefs[$defid]->options) {
+//                         // Save the new value for options.
+//                         $DB->update_record('question_dataset_definitions', $datasetdef);
+
+//                     }
+            if($defid == "1-0-scadans1") {
+                    // Get maxnumber.
+                    if ($maxnumber == -1 || $datasetdef->itemcount < $maxnumber) {
+                        $maxnumber = $datasetdef->itemcount;
+                    }
+            }
+        }
+//         // Handle adding and removing of dataset items.
+//         $i = 1;
+//         if ($maxnumber > parent::MAX_DATASET_ITEMS) {
+//             $maxnumber = parent::MAX_DATASET_ITEMS;
+//         }
+
+        ksort($fromform->definition);
+        $k = 1;
+        foreach ($fromform->definition as $key => $defid) {
+
+            if ($k > count($datasetdefs)*$maxnumber) {
+//             if ($key > $maxnumber) {
+                break;
+            }
+
+                // call to our function ..
+                //                         echo '<br>============fromformdef==================';
+                //                         print_object($fromformdefinition);
+
+                if($defid == "1-0-scadans1") {
+                    $itemnumber = ceil($k / count($datasetdefs));
+//                     $itemnumber = ceil($key / count($datasetdefs));
+                    $scadansvalue = $this->generate_scadans1_value($itemnumber, $fromform, $datasetdefs);
+
+                    //                             $addeditem = new stdClass();
+                    //                             $addeditem->id =  $fromformitemid[$k];
+                    //                             $addeditem->value = $scadansvalue;
+                    $fromform->number[$k]= $scadansvalue;
+                    //                             $addeditem->itemnumber = $itemnumber;
+
+                    $datasetdefs[$defid]->items[$itemnumber]->value = $scadansvalue;
+                    //OR
+                    //$this->datasetdefs[$defid]->items[$addeditem->itemnumber] = $addeditem;
+                    //$this->datasetdefs[$defid]->itemcount = $k;
+                }
+                $k++;
+            }
+            // }
+            parent::save_question($question, $fromform);
+    }
+
+    //Copy of comment_on_datasetitems($qtypeobj, $questionid, $questiontext,
+    //        $answers, $data, $number) {...}
+    protected function generate_scadans1_value($itemnumber, $fromform, $datasetdefs) {
+        // see for $data value for evaluation of below functn
+
+        //         if($defid == "1-0-scadans1") {
+
+        // Either this .. if possible checkout
+        //         $comment = $this->qtypeobj->comment_on_datasetitems(
+        //                 $this->qtypeobj, $this->question->id,
+        //                 $this->question->questiontext, $this->nonemptyanswer,
+        //                 $data, $itemnumber);
+
+                // OR this .. code from comment_on_dsitems(..) ..
+                //======================================================================
+//         $kanswers = fullclone($fromform->answer);   // OR
+//         $kanswers1 = fullclone($fromform->answer[0]);
+        $kanswers = fullclone($fromform->answer);
+
+                //         echo '<br> kanswers ';
+                //         print_object($kanswers);
+
+                //         $delimiter = ': ';
+                //         $virtualqtype =  $this->qtypeobj->get_virtual_qtype();
+                foreach ($kanswers as $key => $kanswer) {
+                    $kdata = array();
+
+                    //             if ($kkey == 0) {
+//                     $error = qtype_calculated_find_formula_errors($kanswer->answer);
+                    $error = qtype_calculated_find_formula_errors($kanswer);
+
+                    //             if ($error) {
+                    //                 $comment->stranswers[$key] = $error;
+                    //                 continue;
+                    //             }
+
+                    // Calc $data
+                    if (!empty($datasetdefs)) {
+                        //                 $j = $this->noofitems * count($this->datasetdefs);
+                        //                 for ($itemnumber = $this->noofitems; $itemnumber >= 1; $itemnumber--) {
+                        //                 for ($itemnumber = 1; $itemnumber >= 0; $itemnumber--) {
+                            foreach ($datasetdefs as $kdefid => $kdatasetdef) {
+                                //                         echo '<br> datasetdef ';
+                                //                         print_object($kdatasetdef);
+                                if (isset($kdatasetdef->items[$itemnumber])) {
+                                    $kdata[$kdatasetdef->name] = $kdatasetdef->items[$itemnumber]->value;
+                                }
+                            }
+                            //                 }
+                            //                 }
+
+                            // Requires data ..
+                            //                 $kformula = $this->substitute_variables($kanswer->answer, $kdata);   // subs_var is a func of qtype_calc and not this class
+                            //                 $this->qtypeobj->
+
+                            //                 echo '<br> kanswer ';
+                            //                 print_object($kanswer);
+//                             $kformattedanswer = qtype_calculated_calculate_answer(
+//                                     $kanswer->answer, $kdata, $kanswer->tolerance,
+//                                     $kanswer->tolerancetype, $kanswer->correctanswerlength,
+//                                     $kanswer->correctanswerformat);
+                            $kformattedanswer = qtype_calculated_calculate_answer(
+                                    $kanswer, $kdata, $fromform->tolerance[$key],
+                                    $fromform->tolerancetype[$key], $fromform->correctanswerlength[$key],
+                                    $fromform->correctanswerformat[$key]);
+                            break;
+                    }
+    }
+
+    //             $scad_ansvalue = qtype_calculated_calculate_answer(  // covered above in code from comment..()
+    //                     $answer, $data, $tolerance,
+    //                     $tolerancetype, $correctanswerlength,
+    //                     $correctanswerformat);
+
+    //             $datasetitem->value = $kformattedanswer->answer;
+    return $kformattedanswer->answer;
+    //         }
+}
+
+public function construct_answer_object($fromform) {
+    $nonemptyanswer = array();
+    if ($fromform->answer) {
+
+        foreach ($fromform->answer as $key => $answer) {
+            if (trim($answer) != '') {  // Just look for non-empty.
+                $answerobj[$key] = new stdClass();
+                $answerobj[$key]->answer = $answer;
+                $answerobj[$key]->fraction = $fromform->fraction[$key];
+                $answerobj[$key]->tolerance = $fromform->tolerance[$key];
+                $answerobj[$key]->tolerancetype = $fromform->tolerancetype[$key];
+                $answerobj[$key]->correctanswerlength = $fromform->correctanswerlength[$key];
+                $answerobj[$key]->correctanswerformat = $fromform->correctanswerformat[$key];
+                $nonemptyanswer[]= $answerobj[$key];
+            }
+        }
+    }
+    return $nonemptyanswer;
+}
+
+public function construct_data_object($fromform) {
+    $data = array();
+}
+
     public function finished_edit_wizard($form) {
         return true;
     }

@@ -496,7 +496,7 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
                             $this->formdata["itemid[{$j}]"] =
                                     $datasetdef->items[$itemnumber]->id;
                             //--------------------
-/*
+
                             echo '<br>===========ln 512===dsdef==================';
                             echo '<br>defid = ' . $defid;
                             print_object($datasetdef);
@@ -508,11 +508,10 @@ class qtype_calculatedstep_edit_form extends qtype_calculated_edit_form {
 //                                 $datasetitem->value = $scadansvalue;
                                 $datasetdef->items[$itemnumber]->value = $scadansvalue;
                             }
-*/
+
                             $data[$datasetdef->name] = $datasetdef->items[$itemnumber]->value;
                             $this->formdata["number[{$j}]"] = $number =
                                     $datasetdef->items[$itemnumber]->value;
-
                             //--------------------
                             if (! is_numeric($number)) {
                                 $a = new stdClass();
