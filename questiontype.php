@@ -27,6 +27,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/question/type/calculated/questiontype.php');
+require_once($CFG->dirroot . '/question/type/calculatedstep/lib.php');
 
 
 /**
@@ -237,7 +238,7 @@ class qtype_calculatedstep extends qtype_calculated {
 
         // Get the old datasets for this question.
         $datasetdefs = $this->get_dataset_definitions($question->id, array());
-        echo '<br>==================datasetdefs=================';
+        echo '<br>==================datasetdefs bef=================';
         print_object($datasetdefs);
 
         $i = 1;
@@ -256,6 +257,10 @@ class qtype_calculatedstep extends qtype_calculated {
             $datasetdefs[$defid]->itemcount = $i;
             $i++;
         }
+
+        echo '<br>==================datasetdefs after=================';
+        print_object($datasetdefs);
+
 
         // Handle generator options...
 //         $olddatasetdefs = fullclone($datasetdefs);
@@ -281,10 +286,56 @@ class qtype_calculatedstep extends qtype_calculated {
 //             $maxnumber = parent::MAX_DATASET_ITEMS;
 //         }
 
+
+
+            //============================sir's code=======================================================
+        $k = 1;
+        $answeritem = new stdClass();
+        $answeritem->answer = $fromform->answer[0];
         ksort($fromform->definition);
+        foreach ($fromform->definition as $key => $defid) {
+//             echo '<br>=========k1====== ' . $k;
+            if ($k > count($datasetdefs)*$maxnumber) {
+                //             if ($key > $maxnumber) {
+                break;
+            }
+//         foreach ($datasetdefs as $defid => $datasetdef) {
+
+
+            if($defid == "1-0-scadans1") {
+                $itemnumber = ceil($k / count($datasetdefs));
+//                 echo '<br>=========k2====== ' . $k;
+//                 echo '<br>=========itemnumber====== ' . $itemnumber;
+
+                foreach ($datasetdefs as $kdefid => $kdatasetdef) {
+                    //                         echo '<br> datasetdef ';
+                    //                         print_object($kdatasetdef);
+                    if (isset($kdatasetdef->items[$itemnumber])) {
+                        $kdata[$kdatasetdef->name] = $kdatasetdef->items[$itemnumber]->value;
+                        print_object($kdata);
+                    }
+                }
+
+                $answeritem->data = $kdata;
+                //                 if($defid == "1-0-scadans1") {
+                //                     $itemnumber = ceil($k / count($datasetdefs));
+                //                     $itemnumber = ceil($key / count($datasetdefs));
+                $scadansvalue = generate_scadans_value($answeritem);
+//                 echo '<br>=========scadans====== ' . $scadansvalue;
+//                 echo '<br>=========k3====== ' . $k;
+//                 echo '<br>=========key====== ' . $key;
+                $fromform->number[$k]= $scadansvalue;
+            }
+            $k++;
+        }
+        echo '<br>==================fromform after scad compute=================';
+        print_object($fromform);
+//         }
+            //======================================my code=================================================
+/*
+         ksort($fromform->definition);
         $k = 1;
         foreach ($fromform->definition as $key => $defid) {
-
             if ($k > count($datasetdefs)*$maxnumber) {
 //             if ($key > $maxnumber) {
                 break;
@@ -310,11 +361,32 @@ class qtype_calculatedstep extends qtype_calculated {
                     //$this->datasetdefs[$defid]->items[$addeditem->itemnumber] = $addeditem;
                     //$this->datasetdefs[$defid]->itemcount = $k;
                 }
+
                 $k++;
             }
             // }
+            */
+            //===========================================================================================
             parent::save_question($question, $fromform);
     }
+
+
+public function generate_scadans2_value($answeritem){
+    $formattedanswer = qtype_calculated_calculate_answer(
+            $answeritem->answer, $answeritem->data, $tolerance = 0,
+            $tolerancetype = 0, $answerlength = 9,
+            $answerformat = 0);
+
+
+//             $scad_ansvalue = qtype_calculated_calculate_answer(  // covered above in code from comment..()
+//                     $answer, $data, $tolerance,
+//                     $tolerancetype, $correctanswerlength,
+//                     $correctanswerformat);
+
+//             $datasetitem->value = $kformattedanswer->answer;
+return $formattedanswer->answer;
+//         }
+}
 
     //Copy of comment_on_datasetitems($qtypeobj, $questionid, $questiontext,
     //        $answers, $data, $number) {...}

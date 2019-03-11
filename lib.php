@@ -50,6 +50,23 @@ function qtype_calculatedstep_pluginfile($course, $cm, $context, $filearea,
             $args, $forcedownload, $options);
 }
 
+function generate_scadans_value($answeritem){
+    $formattedanswer = qtype_calculated_calculate_answer(
+            $answeritem->answer, $answeritem->data, $tolerance = 0,
+            $tolerancetype = 0, $answerlength = 9,
+            $answerformat = 0);
+
+
+    //             $scad_ansvalue = qtype_calculated_calculate_answer(  // covered above in code from comment..()
+    //                     $answer, $data, $tolerance,
+    //                     $tolerancetype, $correctanswerlength,
+    //                     $correctanswerformat);
+
+    //             $datasetitem->value = $kformattedanswer->answer;
+    return $formattedanswer->answer;
+    //         }
+}
+/*
 function generate_scadans_value($answeritem) {
     // see for $data value for evaluation of below functn
 
@@ -116,4 +133,4 @@ function generate_scadans_value($answeritem) {
 //             $datasetitem->value = $kformattedanswer->answer;
 return $formattedanswer->answer;
 //         }
-}
+}*/
